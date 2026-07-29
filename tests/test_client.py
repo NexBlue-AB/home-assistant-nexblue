@@ -102,6 +102,17 @@ class NexBlueClientTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(session.calls[1][1].endswith("/openapi/chargers/NB1/cmd/start_charging"))
         self.assertEqual(session.calls[1][2]["json"], {})
 
+    async def test_rejected_command_reports_user_safe_reason(self):
+        session = Session([
+            Response(200, {"access_token": "access", "refresh_token": "refresh", "expires_in": 3600}),
+            Response(200, {"result": 5}),
+        ])
+        client = NexBlueClient(session, "https://example.test")
+        await client.async_refresh_access_token("refresh")
+
+        with self.assertRaisesRegex(Exception, "occupied by another user"):
+            await client.async_start_charging("NB1")
+
     async def test_device_offline_error_is_single_device_exception(self):
         session = Session([
             Response(200, {"access_token": "access", "refresh_token": "refresh", "expires_in": 3600}),

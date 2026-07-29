@@ -72,5 +72,5 @@ class NexBlueChargingSwitch(CoordinatorEntity[NexBlueDataUpdateCoordinator], Swi
             NexBlueDeviceOfflineError,
             NexBlueRateLimitError,
         ) as err:
-            raise HomeAssistantError("NexBlue charger command failed") from err
+            raise HomeAssistantError(str(err)) from err
         await self.coordinator.async_request_refresh()

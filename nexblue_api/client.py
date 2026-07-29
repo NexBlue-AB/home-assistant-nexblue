@@ -25,6 +25,14 @@ from .exceptions import (
 from .models import Charger, ChargerStatus
 from .models import TokenBundle
 
+CHARGING_CONTROL_RESULT_MESSAGES = {
+    1: "The charger is not in a state that allows this command",
+    2: "You do not have permission to control this charger",
+    3: "The charger RCD check failed",
+    4: "The charger is disabled",
+    5: "The charger is currently occupied by another user",
+}
+
 
 class NexBlueClient:
     """Use one API session for a Home Assistant config entry."""
@@ -106,8 +114,12 @@ class NexBlueClient:
             json={},
             authenticated=True,
         )
-        if payload.get("result") not in (0, "success"):
-            raise NexBlueCommandError("The charger rejected the command")
+        result = payload.get("result")
+        if result not in (0, "success"):
+            message = CHARGING_CONTROL_RESULT_MESSAGES.get(
+                result, f"The charger rejected the command with result {result}"
+            )
+            raise NexBlueCommandError(message)
 
     async def _async_authenticated_request(self, method: str, path: str) -> dict[str, Any]:
         if not self._access_token:

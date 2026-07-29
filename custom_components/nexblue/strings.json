@@ -27,14 +27,26 @@
   "entity": {
     "sensor": {
       "charging_state": {"name": "Charging state"},
+      "network_status": {"name": "Network status"},
+      "is_disable": {"name": "Availability"},
+      "is_lock": {"name": "Cable lock state"},
       "power": {"name": "Charging power"},
+      "energy": {"name": "Session energy"},
       "lifetime_energy": {"name": "Lifetime energy"},
-      "current_1": {"name": "Current phase 1"},
-      "current_2": {"name": "Current phase 2"},
-      "current_3": {"name": "Current phase 3"},
-      "voltage_1": {"name": "Voltage phase 1"},
-      "voltage_2": {"name": "Voltage phase 2"},
-      "voltage_3": {"name": "Voltage phase 3"}
+      "current_limit": {"name": "Current limit"},
+      "cable_current_limit": {"name": "Cable current limit"},
+      "circuit_fuse": {"name": "Circuit fuse"},
+      "cable_lock_mode": {"name": "Cable lock mode"},
+      "access_level": {"name": "Access level"},
+      "phase_charging": {"name": "Phase charging"},
+      "brightness": {"name": "LED brightness"},
+      "protocol_version": {"name": "Protocol version"},
+      "current_1": {"name": "Current L1"},
+      "current_2": {"name": "Current L2"},
+      "current_3": {"name": "Current L3"},
+      "voltage_1": {"name": "Voltage L1"},
+      "voltage_2": {"name": "Voltage L2"},
+      "voltage_3": {"name": "Voltage L3"}
     },
     "switch": {
       "charging": {"name": "Charging"}
