@@ -1,0 +1,43 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "description": "Sign in with your NexBlue end-user account. Your password is used once to obtain a refresh token and is not stored.",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "reauth_confirm": {
+        "description": "The NexBlue refresh token for {username} expired. Enter the password again to reconnect.",
+        "data": {
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "NexBlue authentication failed.",
+      "cannot_connect": "Cannot connect to NexBlue."
+    },
+    "abort": {
+      "reauth_successful": "NexBlue authentication was refreshed.",
+      "reauth_entry_missing": "The NexBlue entry to reauthenticate was not found."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "charging_state": {"name": "Charging state"},
+      "power": {"name": "Charging power"},
+      "lifetime_energy": {"name": "Lifetime energy"},
+      "current_1": {"name": "Current phase 1"},
+      "current_2": {"name": "Current phase 2"},
+      "current_3": {"name": "Current phase 3"},
+      "voltage_1": {"name": "Voltage phase 1"},
+      "voltage_2": {"name": "Voltage phase 2"},
+      "voltage_3": {"name": "Voltage phase 3"}
+    },
+    "switch": {
+      "charging": {"name": "Charging"}
+    }
+  }
+}
