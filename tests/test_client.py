@@ -2,7 +2,12 @@
 
 import unittest
 
-from nexblue_api import NexBlueAuthError, NexBlueClient, NexBlueRateLimitError
+from nexblue_api import (
+    NexBlueAuthError,
+    NexBlueClient,
+    NexBlueDeviceOfflineError,
+    NexBlueRateLimitError,
+)
 
 
 class Response:
@@ -95,3 +100,15 @@ class NexBlueClientTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(session.calls[1][0], "POST")
         self.assertTrue(session.calls[1][1].endswith("/openapi/chargers/NB1/cmd/start_charging"))
+        self.assertEqual(session.calls[1][2]["json"], {})
+
+    async def test_device_offline_error_is_single_device_exception(self):
+        session = Session([
+            Response(200, {"access_token": "access", "refresh_token": "refresh", "expires_in": 3600}),
+            Response(400, {"code": 2105, "message": "NB1 device offline, command can not be sent"}),
+        ])
+        client = NexBlueClient(session, "https://example.test")
+        await client.async_refresh_access_token("refresh")
+
+        with self.assertRaises(NexBlueDeviceOfflineError):
+            await client.async_get_charger_status("NB1")

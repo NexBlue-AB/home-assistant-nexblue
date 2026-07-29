@@ -63,8 +63,15 @@ class NexBlueStatusSensor(CoordinatorEntity[NexBlueDataUpdateCoordinator], Senso
             self._attr_state_class = SensorStateClass.MEASUREMENT
 
     @property
+    def available(self) -> bool:
+        """Return false when this charger is listed but currently unreachable."""
+        return self.coordinator.data.get(self._serial_number) is not None
+
+    @property
     def native_value(self):
-        status = self.coordinator.data[self._serial_number]
+        status = self.coordinator.data.get(self._serial_number)
+        if status is None:
+            return None
         if self._metric == "charging_state":
             return str(status.charging_state)
         if self._metric == "power":

@@ -18,6 +18,7 @@ from .exceptions import (
     NexBlueAuthError,
     NexBlueCommandError,
     NexBlueConnectionError,
+    NexBlueDeviceOfflineError,
     NexBlueError,
     NexBlueRateLimitError,
 )
@@ -99,8 +100,11 @@ class NexBlueClient:
         await self._async_command(serial_number, "stop_charging")
 
     async def _async_command(self, serial_number: str, command: str) -> None:
-        payload = await self._async_authenticated_request(
-            "POST", f"/openapi/chargers/{serial_number}/cmd/{command}"
+        payload = await self._async_request(
+            "POST",
+            f"/openapi/chargers/{serial_number}/cmd/{command}",
+            json={},
+            authenticated=True,
         )
         if payload.get("result") not in (0, "success"):
             raise NexBlueCommandError("The charger rejected the command")
@@ -127,7 +131,12 @@ class NexBlueClient:
                     raise NexBlueAuthError("Authentication failed")
                 if response.status == 429:
                     raise NexBlueRateLimitError("NexBlue API rate limit reached")
+                if response.status == 415:
+                    raise NexBlueCommandError("The NexBlue API rejected the command format")
                 if response.status >= 400:
+                    error_payload = await _async_safe_json(response)
+                    if error_payload.get("code") == 2105:
+                        raise NexBlueDeviceOfflineError("NexBlue charger is offline")
                     raise NexBlueError(f"NexBlue API returned HTTP {response.status}")
                 data = await response.json()
         except ClientError as err:
@@ -141,3 +150,12 @@ class NexBlueClient:
         self._refresh_token = token.refresh_token or fallback_refresh_token
         expires_in = max(token.expires_in - 60, 0)
         self._access_token_expires_at = time.monotonic() + expires_in
+
+
+async def _async_safe_json(response: Any) -> dict[str, Any]:
+    """Return an error response body when it is JSON, without exposing it."""
+    try:
+        data = await response.json()
+    except (ClientError, ValueError, TypeError):
+        return {}
+    return data if isinstance(data, dict) else {}

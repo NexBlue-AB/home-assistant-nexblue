@@ -7,13 +7,20 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from nexblue_api import NexBlueAuthError, NexBlueClient, NexBlueConnectionError, NexBlueRateLimitError
+from nexblue_api import (
+    NexBlueAuthError,
+    NexBlueClient,
+    NexBlueConnectionError,
+    NexBlueDeviceOfflineError,
+    NexBlueError,
+    NexBlueRateLimitError,
+)
 from nexblue_api.models import ChargerStatus
 
 from .const import CONF_REFRESH_TOKEN, DOMAIN, UPDATE_INTERVAL
 
 
-class NexBlueDataUpdateCoordinator(DataUpdateCoordinator[dict[str, ChargerStatus]]):
+class NexBlueDataUpdateCoordinator(DataUpdateCoordinator[dict[str, ChargerStatus | None]]):
     """Fetch all charger telemetry using a single coordinated update."""
 
     def __init__(
@@ -26,7 +33,7 @@ class NexBlueDataUpdateCoordinator(DataUpdateCoordinator[dict[str, ChargerStatus
         self.config_entry = entry
         self.client = client
 
-    async def _async_update_data(self) -> dict[str, ChargerStatus]:
+    async def _async_update_data(self) -> dict[str, ChargerStatus | None]:
         try:
             token = await self.client.async_ensure_access_token(
                 self.config_entry.data[CONF_REFRESH_TOKEN]
@@ -37,10 +44,21 @@ class NexBlueDataUpdateCoordinator(DataUpdateCoordinator[dict[str, ChargerStatus
                     data={**self.config_entry.data, CONF_REFRESH_TOKEN: token.refresh_token},
                 )
             chargers = await self.client.async_list_chargers()
-            data = {charger.serial_number: await self.client.async_get_charger_status(charger.serial_number) for charger in chargers}
+            data: dict[str, ChargerStatus | None] = {}
+            for charger in chargers:
+                try:
+                    data[charger.serial_number] = await self.client.async_get_charger_status(
+                        charger.serial_number
+                    )
+                except (NexBlueAuthError, NexBlueConnectionError, NexBlueRateLimitError):
+                    raise
+                except NexBlueDeviceOfflineError:
+                    data[charger.serial_number] = None
+                except NexBlueError:
+                    data[charger.serial_number] = None
         except NexBlueAuthError as err:
             raise ConfigEntryAuthFailed from err
-        except (NexBlueConnectionError, NexBlueRateLimitError) as err:
+        except (NexBlueConnectionError, NexBlueRateLimitError, NexBlueError) as err:
             raise UpdateFailed("Unable to update NexBlue charger data") from err
 
         return data

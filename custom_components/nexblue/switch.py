@@ -10,7 +10,12 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from nexblue_api import NexBlueCommandError, NexBlueConnectionError, NexBlueRateLimitError
+from nexblue_api import (
+    NexBlueCommandError,
+    NexBlueConnectionError,
+    NexBlueDeviceOfflineError,
+    NexBlueRateLimitError,
+)
 
 from . import NexBlueConfigEntry
 from .coordinator import NexBlueDataUpdateCoordinator
@@ -37,9 +42,15 @@ class NexBlueChargingSwitch(CoordinatorEntity[NexBlueDataUpdateCoordinator], Swi
         )
 
     @property
+    def available(self) -> bool:
+        """Return false when this charger is listed but currently unreachable."""
+        return self.coordinator.data.get(self._serial_number) is not None
+
+    @property
     def is_on(self) -> bool:
         """NexBlue status enum 2 means charging."""
-        return str(self.coordinator.data[self._serial_number].charging_state).lower() in {"2", "charging"}
+        status = self.coordinator.data.get(self._serial_number)
+        return status is not None and str(status.charging_state).lower() in {"2", "charging"}
 
     async def async_turn_on(self, **kwargs) -> None:
         """Start a session, then request one coordinated status refresh."""
@@ -55,6 +66,11 @@ class NexBlueChargingSwitch(CoordinatorEntity[NexBlueDataUpdateCoordinator], Swi
                 await self.coordinator.client.async_start_charging(self._serial_number)
             else:
                 await self.coordinator.client.async_stop_charging(self._serial_number)
-        except (NexBlueCommandError, NexBlueConnectionError, NexBlueRateLimitError) as err:
+        except (
+            NexBlueCommandError,
+            NexBlueConnectionError,
+            NexBlueDeviceOfflineError,
+            NexBlueRateLimitError,
+        ) as err:
             raise HomeAssistantError("NexBlue charger command failed") from err
         await self.coordinator.async_request_refresh()

@@ -19,3 +19,7 @@ class NexBlueRateLimitError(NexBlueError):
 
 class NexBlueCommandError(NexBlueError):
     """A charger rejected a requested command."""
+
+
+class NexBlueDeviceOfflineError(NexBlueCommandError):
+    """A single charger is offline and cannot answer a command/status request."""

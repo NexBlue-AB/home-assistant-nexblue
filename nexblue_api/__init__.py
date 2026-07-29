@@ -5,6 +5,7 @@ from .exceptions import (
     NexBlueAuthError,
     NexBlueCommandError,
     NexBlueConnectionError,
+    NexBlueDeviceOfflineError,
     NexBlueError,
     NexBlueRateLimitError,
 )
@@ -17,6 +18,7 @@ __all__ = [
     "NexBlueCommandError",
     "NexBlueClient",
     "NexBlueConnectionError",
+    "NexBlueDeviceOfflineError",
     "NexBlueError",
     "NexBlueRateLimitError",
     "TokenBundle",
