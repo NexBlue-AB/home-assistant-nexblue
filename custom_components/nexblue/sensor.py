@@ -7,11 +7,25 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfElectricPotential, UnitOfEnergy, UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import NexBlueConfigEntry
 from .coordinator import NexBlueDataUpdateCoordinator
+
+DIAGNOSTIC_METRICS = {
+    "is_lock",
+    "cable_lock_mode",
+    "is_disable",
+    "access_level",
+    "phase_charging",
+    "cable_current_limit",
+    "circuit_fuse",
+    "network_status",
+    "brightness",
+    "protocol_version",
+}
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: NexBlueConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
@@ -59,6 +73,8 @@ class NexBlueStatusSensor(CoordinatorEntity[NexBlueDataUpdateCoordinator], Senso
         self._attr_translation_key = f"{metric}{suffix}"
         self._attr_name = _sensor_name(metric, phase)
         self._attr_device_info = DeviceInfo(identifiers={("nexblue", serial_number)}, name=f"NexBlue {serial_number}", manufacturer="NexBlue")
+        if metric in DIAGNOSTIC_METRICS:
+            self._attr_entity_category = EntityCategory.DIAGNOSTIC
         if metric == "power":
             self._attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
             self._attr_device_class = SensorDeviceClass.POWER
