@@ -24,7 +24,6 @@ DIAGNOSTIC_METRICS = {
     "circuit_fuse",
     "network_status",
     "brightness",
-    "protocol_version",
 }
 
 
@@ -53,7 +52,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: NexBlueConfigEntry, asyn
             # Keep uk_reg parsed in the API model, but do not expose it to users yet.
             # NexBlueStatusSensor(coordinator, serial_number, "uk_reg"),
             NexBlueStatusSensor(coordinator, serial_number, "brightness"),
-            NexBlueStatusSensor(coordinator, serial_number, "protocol_version"),
         )
     )
 
@@ -72,6 +70,7 @@ class NexBlueStatusSensor(CoordinatorEntity[NexBlueDataUpdateCoordinator], Senso
         self._attr_unique_id = f"{serial_number}_{metric}{suffix}"
         self._attr_translation_key = f"{metric}{suffix}"
         self._attr_name = _sensor_name(metric, phase)
+        self._attr_icon = _sensor_icon(metric, phase)
         self._attr_device_info = DeviceInfo(identifiers={("nexblue", serial_number)}, name=f"NexBlue {serial_number}", manufacturer="NexBlue")
         if metric in DIAGNOSTIC_METRICS:
             self._attr_entity_category = EntityCategory.DIAGNOSTIC
@@ -135,32 +134,30 @@ class NexBlueStatusSensor(CoordinatorEntity[NexBlueDataUpdateCoordinator], Senso
             return status.brightness_percent
         if self._metric == "uk_reg":
             return _bool_text(status.uk_reg, true_text="Enabled", false_text="Disabled")
-        if self._metric == "protocol_version":
-            return status.protocol_version
         values = status.current_a if self._metric == "current" else status.voltage_v
         return values[self._phase] if self._phase is not None and len(values) > self._phase else None
 
 
 CHARGING_STATE_MAP = {
-    0: "Free",
-    1: "Car connected",
+    0: "Connect cable to charge",
+    1: "Ready to charge",
     2: "Charging",
-    3: "Finishing",
-    4: "Error",
-    5: "Load balancing waiting",
-    6: "Delayed waiting",
-    7: "Car response waiting",
+    3: "Charging complete",
+    4: "Charging unavailable",
+    5: "Waiting for available power",
+    6: "Schedule waiting",
+    7: "Waiting for car response",
 }
 
 NETWORK_STATUS_MAP = {
     0: "None",
     1: "Wi-Fi",
-    2: "Modem",
+    2: "4G",
     3: "Ethernet",
 }
 
 CABLE_LOCK_MODE_MAP = {
-    0: "Lock while charging",
+    0: "Locked while charging",
     1: "Always locked",
 }
 
@@ -201,7 +198,7 @@ def _sensor_name(metric: str, phase: int | None) -> str:
     if metric == "current_limit":
         return "Current limit"
     if metric == "cable_current_limit":
-        return "Cable current limit"
+        return "Cable rating"
     if metric == "circuit_fuse":
         return "Circuit fuse"
     if metric == "cable_lock_mode":
@@ -214,10 +211,41 @@ def _sensor_name(metric: str, phase: int | None) -> str:
         return "LED brightness"
     if metric == "uk_reg":
         return "UK regulation mode"
-    if metric == "protocol_version":
-        return "Protocol version"
     if metric == "current" and phase is not None:
         return f"Current L{phase + 1}"
     if metric == "voltage" and phase is not None:
         return f"Voltage L{phase + 1}"
     return metric
+
+
+def _sensor_icon(metric: str, phase: int | None) -> str | None:
+    """Return a more useful icon than the frontend's default sensor icon."""
+    if metric == "charging_state":
+        return "mdi:ev-station"
+    if metric == "network_status":
+        return "mdi:wifi"
+    if metric == "is_disable":
+        return "mdi:check-circle-outline"
+    if metric == "is_lock":
+        return "mdi:lock-check"
+    if metric == "power":
+        return "mdi:flash"
+    if metric == "energy":
+        return "mdi:lightning-bolt"
+    if metric == "lifetime_energy":
+        return "mdi:counter"
+    if metric in {"current", "current_limit", "cable_current_limit"}:
+        return "mdi:current-ac"
+    if metric == "circuit_fuse":
+        return "mdi:fuse"
+    if metric == "cable_lock_mode":
+        return "mdi:lock-clock"
+    if metric == "access_level":
+        return "mdi:account-lock"
+    if metric == "phase_charging":
+        return "mdi:sine-wave"
+    if metric == "brightness":
+        return "mdi:brightness-percent"
+    if metric == "voltage":
+        return "mdi:sine-wave"
+    return None

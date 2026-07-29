@@ -40,7 +40,6 @@
       "access_level": {"name": "Access level"},
       "phase_charging": {"name": "Phase charging"},
       "brightness": {"name": "LED brightness"},
-      "protocol_version": {"name": "Protocol version"},
       "current_1": {"name": "Current L1"},
       "current_2": {"name": "Current L2"},
       "current_3": {"name": "Current L3"},

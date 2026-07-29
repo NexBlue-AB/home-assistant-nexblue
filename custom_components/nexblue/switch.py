@@ -38,7 +38,7 @@ class NexBlueChargingSwitch(CoordinatorEntity[NexBlueDataUpdateCoordinator], Swi
         self._serial_number = serial_number
         self._attr_unique_id = f"{serial_number}_charging"
         self._attr_device_info = DeviceInfo(
-            identifiers={("nexblue", serial_number)}, name=f"NexBlue {serial_number}", manufacturer="NexBlue"
+            identifiers={("nexblue", serial_number)}, name=f"{serial_number}", manufacturer="NexBlue"
         )
 
     @property
