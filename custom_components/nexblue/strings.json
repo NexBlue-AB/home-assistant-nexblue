@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "description": "Sign in with your NexBlue end-user account. Your password is used once to obtain a refresh token and is not stored.",
+        "description": "Sign in with your NexBlue end-user account. Home Assistant stores these credentials locally so the integration can reconnect automatically.",
         "data": {
           "username": "Username",
           "password": "Password"

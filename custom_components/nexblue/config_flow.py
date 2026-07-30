@@ -26,7 +26,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class NexBlueConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Authenticate a NexBlue end-user without storing the user's password."""
+    """Authenticate a NexBlue end-user and store credentials for token recovery."""
 
     VERSION = 1
     logger = _LOGGER
@@ -51,6 +51,7 @@ class NexBlueConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     title=f"NexBlue ({user_input[CONF_USERNAME]})",
                     data={
                         CONF_USERNAME: user_input[CONF_USERNAME],
+                        CONF_PASSWORD: user_input[CONF_PASSWORD],
                         CONF_REFRESH_TOKEN: refresh_token,
                         CONF_API_BASE_URL: api_base_url,
                     },
@@ -82,7 +83,11 @@ class NexBlueConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 self.hass.config_entries.async_update_entry(
                     self._reauth_entry,
-                    data={**self._reauth_entry.data, CONF_REFRESH_TOKEN: refresh_token},
+                    data={
+                        **self._reauth_entry.data,
+                        CONF_PASSWORD: user_input[CONF_PASSWORD],
+                        CONF_REFRESH_TOKEN: refresh_token,
+                    },
                 )
                 await self.hass.config_entries.async_reload(self._reauth_entry.entry_id)
                 return self.async_abort(reason="reauth_successful")

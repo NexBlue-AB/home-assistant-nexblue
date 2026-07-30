@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -17,7 +18,7 @@ from nexblue_api import (
 )
 from nexblue_api.models import ChargerStatus
 
-from .const import CONF_REFRESH_TOKEN, DOMAIN, UPDATE_INTERVAL
+from .const import CONF_REFRESH_TOKEN, CONF_USERNAME, DOMAIN, UPDATE_INTERVAL
 
 
 class NexBlueDataUpdateCoordinator(DataUpdateCoordinator[dict[str, ChargerStatus | None]]):
@@ -35,14 +36,7 @@ class NexBlueDataUpdateCoordinator(DataUpdateCoordinator[dict[str, ChargerStatus
 
     async def _async_update_data(self) -> dict[str, ChargerStatus | None]:
         try:
-            token = await self.client.async_ensure_access_token(
-                self.config_entry.data[CONF_REFRESH_TOKEN]
-            )
-            if token and token.refresh_token and token.refresh_token != self.config_entry.data[CONF_REFRESH_TOKEN]:
-                self.hass.config_entries.async_update_entry(
-                    self.config_entry,
-                    data={**self.config_entry.data, CONF_REFRESH_TOKEN: token.refresh_token},
-                )
+            await self._async_ensure_authorized()
             chargers = await self.client.async_list_chargers()
             data: dict[str, ChargerStatus | None] = {}
             for charger in chargers:
@@ -62,3 +56,24 @@ class NexBlueDataUpdateCoordinator(DataUpdateCoordinator[dict[str, ChargerStatus
             raise UpdateFailed("Unable to update NexBlue charger data") from err
 
         return data
+
+    async def _async_ensure_authorized(self) -> None:
+        """Refresh the access token, falling back to the stored password once."""
+        try:
+            token = await self.client.async_ensure_access_token(
+                self.config_entry.data[CONF_REFRESH_TOKEN]
+            )
+        except NexBlueAuthError:
+            password = self.config_entry.data.get(CONF_PASSWORD)
+            if not password:
+                raise
+            token = await self.client.async_login(
+                self.config_entry.data[CONF_USERNAME],
+                password,
+            )
+
+        if token and token.refresh_token and token.refresh_token != self.config_entry.data[CONF_REFRESH_TOKEN]:
+            self.hass.config_entries.async_update_entry(
+                self.config_entry,
+                data={**self.config_entry.data, CONF_REFRESH_TOKEN: token.refresh_token},
+            )
