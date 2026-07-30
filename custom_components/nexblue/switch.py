@@ -6,7 +6,7 @@ import time
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.event import async_call_later
@@ -100,12 +100,15 @@ class NexBlueChargingSwitch(CoordinatorEntity[NexBlueDataUpdateCoordinator], Swi
 
     def _schedule_command_refreshes(self) -> None:
         """Refresh shortly after a command while the cloud/device state catches up."""
+        @callback
+        def _request_refresh(_now) -> None:
+            """Request a coordinator refresh from the event loop."""
+            self.hass.async_create_task(self.coordinator.async_request_refresh())
+
         for delay in COMMAND_REFRESH_DELAYS:
             cancel = async_call_later(
                 self.hass,
                 delay,
-                lambda _now: self.hass.async_create_task(
-                    self.coordinator.async_request_refresh()
-                ),
+                _request_refresh,
             )
             self.async_on_remove(cancel)
