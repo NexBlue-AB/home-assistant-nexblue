@@ -26,11 +26,11 @@ from .models import Charger, ChargerStatus
 from .models import TokenBundle
 
 CHARGING_CONTROL_RESULT_MESSAGES = {
-    1: "The charger is not in a state that allows this command",
-    2: "You do not have permission to control this charger",
-    3: "The charger RCD check failed",
+    1: "The charger is currently unavailable for this operation",
+    2: "You don't have permission to control this charger",
+    3: "The charger's RCD check failed. Please try again later",
     4: "The charger is disabled",
-    5: "The charger is currently occupied by another user",
+    5: "This charger is currently being controlled by another user",
 }
 
 
