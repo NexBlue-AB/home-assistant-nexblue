@@ -17,6 +17,7 @@ from nexblue_api import (
     NexBlueCommandError,
     NexBlueConnectionError,
     NexBlueDeviceOfflineError,
+    NexBlueError,
     NexBlueRateLimitError,
 )
 
@@ -88,6 +89,7 @@ class NexBlueChargingSwitch(CoordinatorEntity[NexBlueDataUpdateCoordinator], Swi
             NexBlueCommandError,
             NexBlueConnectionError,
             NexBlueDeviceOfflineError,
+            NexBlueError,
             NexBlueRateLimitError,
         ) as err:
             raise HomeAssistantError(str(err)) from err

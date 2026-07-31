@@ -113,6 +113,7 @@ class NexBlueClient:
             f"/openapi/chargers/{serial_number}/cmd/{command}",
             json={},
             authenticated=True,
+            command=True,
         )
         result = payload.get("result")
         if result not in (0, "success"):
@@ -133,6 +134,7 @@ class NexBlueClient:
         *,
         json: Mapping[str, Any] | None = None,
         authenticated: bool,
+        command: bool = False,
     ) -> dict[str, Any]:
         headers = {"Authorization": f"Bearer {self._access_token}"} if authenticated else None
         try:
@@ -149,6 +151,10 @@ class NexBlueClient:
                     error_payload = await _async_safe_json(response)
                     if error_payload.get("code") == 2105:
                         raise NexBlueDeviceOfflineError("NexBlue charger is offline")
+                    if command:
+                        raise NexBlueCommandError(
+                            _command_http_error_message(response.status, error_payload)
+                        )
                     raise NexBlueError(f"NexBlue API returned HTTP {response.status}")
                 data = await response.json()
         except ClientError as err:
@@ -171,3 +177,12 @@ async def _async_safe_json(response: Any) -> dict[str, Any]:
     except (ClientError, ValueError, TypeError):
         return {}
     return data if isinstance(data, dict) else {}
+
+
+def _command_http_error_message(status: int, payload: Mapping[str, Any]) -> str:
+    """Return a safe user-facing HTTP command error without exposing raw responses."""
+    code = payload.get("code")
+    if code is not None:
+        return f"The NexBlue API rejected the command with code {code}"
+
+    return f"The NexBlue API rejected the command with HTTP {status}"

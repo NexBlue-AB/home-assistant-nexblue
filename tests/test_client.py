@@ -113,6 +113,17 @@ class NexBlueClientTest(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(Exception, "occupied by another user"):
             await client.async_start_charging("NB1")
 
+    async def test_http_command_error_reports_safe_code(self):
+        session = Session([
+            Response(200, {"access_token": "access", "refresh_token": "refresh", "expires_in": 3600}),
+            Response(400, {"code": 3001, "message": "Detailed backend message"}),
+        ])
+        client = NexBlueClient(session, "https://example.test")
+        await client.async_refresh_access_token("refresh")
+
+        with self.assertRaisesRegex(Exception, "code 3001"):
+            await client.async_start_charging("NB1")
+
     async def test_device_offline_error_is_single_device_exception(self):
         session = Session([
             Response(200, {"access_token": "access", "refresh_token": "refresh", "expires_in": 3600}),
