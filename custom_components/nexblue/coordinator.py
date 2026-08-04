@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD
 from homeassistant.core import HomeAssistant
@@ -20,6 +22,8 @@ from nexblue_api.models import ChargerStatus
 
 from .const import CONF_REFRESH_TOKEN, CONF_USERNAME, DOMAIN, UPDATE_INTERVAL
 
+_LOGGER = logging.getLogger(__name__)
+
 
 class NexBlueDataUpdateCoordinator(DataUpdateCoordinator[dict[str, ChargerStatus | None]]):
     """Fetch all charger telemetry using a single coordinated update."""
@@ -30,7 +34,7 @@ class NexBlueDataUpdateCoordinator(DataUpdateCoordinator[dict[str, ChargerStatus
         entry: ConfigEntry,
         client: NexBlueClient,
     ) -> None:
-        super().__init__(hass, logger=__import__("logging").getLogger(__name__), name=DOMAIN, update_interval=UPDATE_INTERVAL)
+        super().__init__(hass, logger=_LOGGER, name=DOMAIN, update_interval=UPDATE_INTERVAL)
         self.config_entry = entry
         self.client = client
 

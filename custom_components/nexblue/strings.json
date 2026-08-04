@@ -17,7 +17,8 @@
     },
     "error": {
       "invalid_auth": "NexBlue authentication failed.",
-      "cannot_connect": "Cannot connect to NexBlue."
+      "cannot_connect": "Cannot connect to NexBlue.",
+      "unknown": "NexBlue could not complete sign-in. Please try again later."
     },
     "abort": {
       "reauth_successful": "NexBlue authentication was refreshed.",

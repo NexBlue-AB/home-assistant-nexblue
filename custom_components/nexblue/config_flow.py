@@ -12,7 +12,7 @@ from homeassistant.const import CONF_PASSWORD
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from nexblue_api import NexBlueAuthError, NexBlueClient, NexBlueConnectionError
+from nexblue_api import NexBlueAuthError, NexBlueClient, NexBlueConnectionError, NexBlueError
 
 from .const import (
     CONF_API_BASE_URL,
@@ -60,7 +60,7 @@ class NexBlueConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="user", data_schema=_AUTH_SCHEMA, errors=errors)
 
     async def async_step_reauth(self, entry_data: dict[str, Any]) -> FlowResult:
-        """Ask for the password again when the refresh token expires."""
+        """Ask for the password when automatic credential recovery fails."""
         self._reauth_entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
         return await self.async_step_reauth_confirm()
 
@@ -110,6 +110,8 @@ class NexBlueConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return None, "invalid_auth"
         except NexBlueConnectionError:
             return None, "cannot_connect"
+        except NexBlueError:
+            return None, "unknown"
         if not token.refresh_token:
             return None, "invalid_auth"
         return token.refresh_token, None
