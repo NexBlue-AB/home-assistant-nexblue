@@ -37,6 +37,17 @@ On first load, Home Assistant automatically installs the public
 internet connection is required for that initial installation and for cloud
 operation.
 
+### Local Modbus TCP configuration
+
+For supported chargers, see the [Modbus TCP YAML example](examples/modbus/README.md)
+for local readings, charging commands, and one-shot parameter writes using Home
+Assistant's built-in Modbus integration.
+
+This example is configured separately and does not require the cloud integration.
+Installing or updating the custom integration through HACS does not automatically
+install the YAML package. Follow the example's manual setup instructions and
+control limitations, including the absence of a periodic current-limit heartbeat.
+
 ### Credentials and privacy
 
 To support automatic session recovery, Home Assistant stores the NexBlue

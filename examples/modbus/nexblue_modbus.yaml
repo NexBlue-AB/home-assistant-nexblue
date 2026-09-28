@@ -1,0 +1,511 @@
+# Load this file through homeassistant.packages; it already contains modbus:.
+# Sensors, a charging command switch, and explicit one-shot write scripts.
+# The switch does not implement the current-limit heartbeat at register 1000.
+# See README.md in this example directory for installation and multiple chargers.
+modbus:
+  # Single charger: use its actual mDNS hostname if Home Assistant can resolve it.
+  - name: nexblue_modbus_hub
+    type: tcp
+    # If hostname resolution fails, replace host with the charger's LAN IP.
+    # Multiple chargers: use DHCP-reserved IPs and unique hub/entity identifiers.
+    # Do not use _nexblue_modbus._tcp.local. here; it is a service type.
+    host: NexBlue-EVC-Modbus.local.
+    port: 502
+
+    switches:
+      # IF_START command state, not a measurement of actual energy transfer.
+      # OCPP-controlled chargers may reject these commands.
+      - name: NexBlue Modbus Charging Command
+        unique_id: nexblue_modbus_charging_command
+        slave: 200
+        address: 1006
+        write_type: holding
+        command_on: 1
+        command_off: 0
+        scan_interval: 15
+        verify:
+          input_type: holding
+          address: 1006
+          state_on: 1
+          state_off: 0
+          delay: 1
+
+    sensors:
+      - name: NexBlue Brand Raw
+        unique_id: nexblue_brand_raw
+        slave: 200
+        address: 0
+        input_type: input
+        data_type: string
+        count: 8
+        scan_interval: 300
+
+      - name: NexBlue Model Raw
+        unique_id: nexblue_model_raw
+        slave: 200
+        address: 8
+        input_type: input
+        data_type: string
+        count: 8
+        scan_interval: 300
+
+      - name: NexBlue Serial Number Raw
+        unique_id: nexblue_serial_number_raw
+        slave: 200
+        address: 16
+        input_type: input
+        data_type: string
+        count: 12
+        scan_interval: 300
+
+      - name: NexBlue Firmware Version Raw
+        unique_id: nexblue_firmware_version_raw
+        slave: 200
+        address: 28
+        input_type: input
+        data_type: string
+        count: 8
+        scan_interval: 300
+
+      - name: NexBlue Modbus Table Version
+        unique_id: nexblue_modbus_table_version
+        slave: 200
+        address: 36
+        input_type: input
+        data_type: uint16
+        scan_interval: 300
+
+      - name: NexBlue Connector Count
+        unique_id: nexblue_connector_count
+        slave: 200
+        address: 37
+        input_type: input
+        data_type: uint16
+        scan_interval: 300
+
+      - name: NexBlue Device Date Raw
+        unique_id: nexblue_device_date_raw
+        slave: 200
+        address: 38
+        input_type: input
+        data_type: uint32
+        swap: word_byte
+        scan_interval: 60
+
+      - name: NexBlue Device Time Raw
+        unique_id: nexblue_device_time_raw
+        slave: 200
+        address: 40
+        input_type: input
+        data_type: uint32
+        swap: word_byte
+        scan_interval: 10
+
+      - name: NexBlue Timezone Minutes
+        unique_id: nexblue_timezone_minutes
+        slave: 200
+        address: 42
+        input_type: input
+        data_type: int16
+        unit_of_measurement: min
+        scan_interval: 300
+
+      - name: NexBlue Hardware Version Raw
+        unique_id: nexblue_hardware_version_raw
+        slave: 200
+        address: 44
+        input_type: input
+        data_type: string
+        count: 8
+        scan_interval: 300
+
+      - name: NexBlue Charge State
+        unique_id: nexblue_charge_state
+        slave: 200
+        address: 100
+        input_type: input
+        data_type: uint16
+        scan_interval: 5
+
+      - name: NexBlue Current L1
+        unique_id: nexblue_current_l1
+        slave: 200
+        address: 102
+        input_type: input
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: A
+        device_class: current
+        state_class: measurement
+        precision: 1
+        scan_interval: 5
+
+      - name: NexBlue Current L2
+        unique_id: nexblue_current_l2
+        slave: 200
+        address: 104
+        input_type: input
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: A
+        device_class: current
+        state_class: measurement
+        precision: 1
+        scan_interval: 5
+
+      - name: NexBlue Current L3
+        unique_id: nexblue_current_l3
+        slave: 200
+        address: 106
+        input_type: input
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: A
+        device_class: current
+        state_class: measurement
+        precision: 1
+        scan_interval: 5
+
+      - name: NexBlue Voltage L1-N
+        unique_id: nexblue_voltage_l1
+        slave: 200
+        address: 108
+        input_type: input
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: V
+        device_class: voltage
+        state_class: measurement
+        precision: 1
+        scan_interval: 5
+
+      - name: NexBlue Voltage L2-N
+        unique_id: nexblue_voltage_l2
+        slave: 200
+        address: 110
+        input_type: input
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: V
+        device_class: voltage
+        state_class: measurement
+        precision: 1
+        scan_interval: 5
+
+      - name: NexBlue Voltage L3-N
+        unique_id: nexblue_voltage_l3
+        slave: 200
+        address: 112
+        input_type: input
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: V
+        device_class: voltage
+        state_class: measurement
+        precision: 1
+        scan_interval: 5
+
+      - name: NexBlue Phase Angle L1
+        unique_id: nexblue_angle_l1
+        slave: 200
+        address: 114
+        input_type: input
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: deg
+        precision: 1
+        scan_interval: 5
+
+      - name: NexBlue Phase Angle L2
+        unique_id: nexblue_angle_l2
+        slave: 200
+        address: 116
+        input_type: input
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: deg
+        precision: 1
+        scan_interval: 5
+
+      - name: NexBlue Phase Angle L3
+        unique_id: nexblue_angle_l3
+        slave: 200
+        address: 118
+        input_type: input
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: deg
+        precision: 1
+        scan_interval: 5
+
+      - name: NexBlue Power L1
+        unique_id: nexblue_power_l1
+        slave: 200
+        address: 120
+        input_type: input
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        precision: 0
+        scan_interval: 5
+
+      - name: NexBlue Power L2
+        unique_id: nexblue_power_l2
+        slave: 200
+        address: 122
+        input_type: input
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        precision: 0
+        scan_interval: 5
+
+      - name: NexBlue Power L3
+        unique_id: nexblue_power_l3
+        slave: 200
+        address: 124
+        input_type: input
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        precision: 0
+        scan_interval: 5
+
+      - name: NexBlue Power Total
+        unique_id: nexblue_power_total
+        slave: 200
+        address: 126
+        input_type: input
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        precision: 0
+        scan_interval: 5
+
+      - name: NexBlue Session Energy
+        unique_id: nexblue_session_energy
+        slave: 200
+        address: 128
+        input_type: input
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: kWh
+        device_class: energy
+        precision: 3
+        scan_interval: 10
+
+      - name: NexBlue Lifetime Energy
+        unique_id: nexblue_lifetime_energy
+        slave: 200
+        address: 130
+        input_type: input
+        data_type: uint64
+        swap: word_byte
+        scale: 0.001
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        precision: 3
+        scan_interval: 30
+
+      - name: NexBlue Fallback Current Shadow
+        unique_id: nexblue_fallback_current_shadow
+        slave: 200
+        address: 134
+        input_type: input
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: A
+        device_class: current
+        precision: 1
+        scan_interval: 15
+
+      - name: NexBlue Max Charging Current Shadow
+        unique_id: nexblue_max_charging_current_shadow
+        slave: 200
+        address: 136
+        input_type: input
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: A
+        device_class: current
+        precision: 1
+        scan_interval: 15
+
+      - name: NexBlue Phase Charging Config
+        unique_id: nexblue_phase_charging_config
+        slave: 200
+        address: 138
+        input_type: input
+        data_type: uint16
+        scan_interval: 15
+
+      - name: NexBlue Error Bitset
+        unique_id: nexblue_error_bitset
+        slave: 200
+        address: 400
+        input_type: input
+        data_type: uint16
+        scan_interval: 10
+
+      - name: NexBlue Warning Bitset
+        unique_id: nexblue_warning_bitset
+        slave: 200
+        address: 401
+        input_type: input
+        data_type: uint16
+        scan_interval: 10
+
+      - name: NexBlue Waiting Bitset
+        unique_id: nexblue_waiting_bitset
+        slave: 200
+        address: 402
+        input_type: input
+        data_type: uint16
+        scan_interval: 10
+
+      - name: NexBlue Current Limit (RW)
+        unique_id: nexblue_current_limit_register
+        slave: 200
+        address: 1000
+        input_type: holding
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: A
+        device_class: current
+        precision: 1
+        scan_interval: 15
+
+      - name: NexBlue Fallback Limit (RW)
+        unique_id: nexblue_fallback_limit_register
+        slave: 200
+        address: 1002
+        input_type: holding
+        data_type: float32
+        swap: word_byte
+        unit_of_measurement: A
+        device_class: current
+        precision: 1
+        scan_interval: 15
+
+      - name: NexBlue Fallback Timeout (RW)
+        unique_id: nexblue_fallback_timeout_register
+        slave: 200
+        address: 1004
+        input_type: holding
+        data_type: uint32
+        swap: word_byte
+        unit_of_measurement: s
+        scan_interval: 30
+
+      - name: NexBlue Charge Control (RW)
+        unique_id: nexblue_charge_control_register
+        slave: 200
+        address: 1006
+        input_type: holding
+        data_type: uint16
+        scan_interval: 15
+
+      - name: NexBlue Runtime Phase Mode (RW)
+        unique_id: nexblue_runtime_phase_mode_register
+        slave: 200
+        address: 1007
+        input_type: holding
+        data_type: uint16
+        scan_interval: 15
+
+# Target values are not device readbacks. Run the matching Apply script to write.
+input_number:
+  nexblue_modbus_current_limit_target:
+    name: NexBlue Modbus Current Limit Target
+    min: 0
+    max: 32
+    step: 0.1
+    mode: box
+    unit_of_measurement: A
+  nexblue_modbus_fallback_limit_target:
+    name: NexBlue Modbus Fallback Limit Target
+    min: 0
+    max: 16
+    step: 0.1
+    mode: box
+    unit_of_measurement: A
+  nexblue_modbus_fallback_timeout_target:
+    name: NexBlue Modbus Fallback Timeout Target
+    min: 30
+    max: 1800
+    step: 1
+    mode: box
+    unit_of_measurement: s
+
+input_select:
+  nexblue_modbus_phase_mode_target:
+    name: NexBlue Modbus Phase Mode Target
+    options:
+      - Adaptive
+      - Force single phase
+      - Force three phase
+
+script:
+  nexblue_modbus_apply_current_limit:
+    alias: NexBlue Modbus Apply Current Limit
+    description: Write once to 1000. No periodic heartbeat; fallback applies after timeout.
+    mode: single
+    sequence:
+      - action: modbus.write_register
+        data:
+          hub: nexblue_modbus_hub
+          slave: 200
+          address: 1000
+          value: >-
+            {% set raw = (states('input_number.nexblue_modbus_current_limit_target') | float) | pack('<f') %}
+            {{ [raw | unpack('>H'), raw | unpack('>H', offset=2)] }}
+  nexblue_modbus_apply_fallback_limit:
+    alias: NexBlue Modbus Apply Fallback Limit
+    description: Write once to 1002. Values below 6 A are treated as 0 A by the charger.
+    mode: single
+    sequence:
+      - action: modbus.write_register
+        data:
+          hub: nexblue_modbus_hub
+          slave: 200
+          address: 1002
+          value: >-
+            {% set raw = (states('input_number.nexblue_modbus_fallback_limit_target') | float) | pack('<f') %}
+            {{ [raw | unpack('>H'), raw | unpack('>H', offset=2)] }}
+  nexblue_modbus_apply_fallback_timeout:
+    alias: NexBlue Modbus Apply Fallback Timeout
+    description: Write the fallback timeout in seconds to 1004.
+    mode: single
+    sequence:
+      - action: modbus.write_register
+        data:
+          hub: nexblue_modbus_hub
+          slave: 200
+          address: 1004
+          value: >-
+            {% set raw = (states('input_number.nexblue_modbus_fallback_timeout_target') | int) | pack('<I') %}
+            {{ [raw | unpack('>H'), raw | unpack('>H', offset=2)] }}
+  nexblue_modbus_apply_phase_mode:
+    alias: NexBlue Modbus Apply Phase Mode
+    description: >-
+      Write once to 1007. Observe at least 10 minutes between phase switches,
+      at most 2 per hour and 6 per session; this script does not enforce those limits.
+    mode: single
+    sequence:
+      - action: modbus.write_register
+        data:
+          hub: nexblue_modbus_hub
+          slave: 200
+          address: 1007
+          value: >-
+            {{ {'Adaptive': 0, 'Force single phase': 1, 'Force three phase': 2}
+               [states('input_select.nexblue_modbus_phase_mode_target')] | int }}
