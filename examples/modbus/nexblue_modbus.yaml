@@ -14,7 +14,7 @@ modbus:
 
     switches:
       # IF_START command state, not a measurement of actual energy transfer.
-      # OCPP-controlled chargers may reject these commands.
+      # In OCPP mode, this register does not control charging.
       - name: NexBlue Modbus Charging Command
         unique_id: nexblue_modbus_charging_command
         slave: 200
