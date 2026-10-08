@@ -9,6 +9,6 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/NexBlue-AB/home-assistant-nexblue/issues",
   "quality_scale": "bronze",
-  "requirements": ["nexblue-api==0.1.3"],
-  "version": "0.1.3"
+  "requirements": ["nexblue-api>=0.1.3"],
+  "version": "0.1.4"
 }
