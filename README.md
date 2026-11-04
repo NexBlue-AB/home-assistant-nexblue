@@ -10,6 +10,7 @@ basic charging controls in Home Assistant.
 - Cloud-polled charger status and telemetry, including charging state, power,
   session and lifetime energy, current, voltage, network status, and selected
   diagnostic values
+- Charging and vehicle connected binary sensors for automations
 - Start and stop charging
 - Automatic access-token renewal and recovery from an invalid refresh token
 - Home Assistant reauthentication when saved credentials can no longer sign in

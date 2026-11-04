@@ -26,6 +26,10 @@
     }
   },
   "entity": {
+    "binary_sensor": {
+      "charging": {"name": "Charging"},
+      "vehicle_connected": {"name": "Vehicle connected"}
+    },
     "sensor": {
       "charging_state": {"name": "Charging state"},
       "network_status": {"name": "Network status"},
