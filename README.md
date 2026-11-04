@@ -10,6 +10,8 @@ basic charging controls in Home Assistant.
 - Cloud-polled charger status and telemetry, including charging state, power,
   session and lifetime energy, current, voltage, network status, and selected
   diagnostic values
+- Energy today, from NexBlue's aggregated measurements (owner and installer
+  accounts, refreshed every five minutes)
 - Start and stop charging
 - Automatic access-token renewal and recovery from an invalid refresh token
 - Home Assistant reauthentication when saved credentials can no longer sign in

@@ -34,6 +34,7 @@
       "power": {"name": "Charging power"},
       "energy": {"name": "Session energy"},
       "lifetime_energy": {"name": "Lifetime energy"},
+      "energy_today": {"name": "Energy today"},
       "current_limit": {"name": "Current limit"},
       "cable_current_limit": {"name": "Cable current limit"},
       "circuit_fuse": {"name": "Circuit fuse"},

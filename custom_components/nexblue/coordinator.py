@@ -9,6 +9,7 @@ from homeassistant.const import CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from nexblue_api import (
     NexBlueAuthError,
@@ -20,7 +21,7 @@ from nexblue_api import (
 )
 from nexblue_api.models import ChargerStatus
 
-from .const import CONF_REFRESH_TOKEN, CONF_USERNAME, DOMAIN, UPDATE_INTERVAL
+from .const import CONF_REFRESH_TOKEN, CONF_USERNAME, DOMAIN, ENERGY_UPDATE_INTERVAL, UPDATE_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -81,3 +82,41 @@ class NexBlueDataUpdateCoordinator(DataUpdateCoordinator[dict[str, ChargerStatus
                 self.config_entry,
                 data={**self.config_entry.data, CONF_REFRESH_TOKEN: token.refresh_token},
             )
+
+
+class NexBlueEnergyTodayCoordinator(DataUpdateCoordinator[dict[str, float | None]]):
+    """Fetch today's energy per charger on a slower interval than telemetry.
+
+    Relies on the telemetry coordinator for the charger list and token refresh.
+    The measurement endpoint is limited to owner and installer accounts, so a
+    rejected charger reports no value rather than failing the whole update.
+    """
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        client: NexBlueClient,
+        status_coordinator: NexBlueDataUpdateCoordinator,
+    ) -> None:
+        super().__init__(
+            hass, logger=_LOGGER, name=f"{DOMAIN}_energy_today", update_interval=ENERGY_UPDATE_INTERVAL
+        )
+        self.config_entry = entry
+        self.client = client
+        self._status_coordinator = status_coordinator
+
+    async def _async_update_data(self) -> dict[str, float | None]:
+        start_of_day = dt_util.start_of_local_day()
+        now = dt_util.utcnow()
+        data: dict[str, float | None] = {}
+        for serial_number in self._status_coordinator.data or {}:
+            try:
+                energy = await self.client.async_get_energy_consumption(serial_number, start_of_day, now)
+            except (NexBlueConnectionError, NexBlueRateLimitError) as err:
+                raise UpdateFailed("Unable to update NexBlue energy data") from err
+            except NexBlueError:
+                data[serial_number] = None
+            else:
+                data[serial_number] = energy.total_kwh
+        return data

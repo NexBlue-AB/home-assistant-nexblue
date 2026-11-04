@@ -12,7 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import NexBlueConfigEntry
-from .coordinator import NexBlueDataUpdateCoordinator
+from .coordinator import NexBlueDataUpdateCoordinator, NexBlueEnergyTodayCoordinator
 
 DIAGNOSTIC_METRICS = {
     "is_lock",
@@ -54,6 +54,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: NexBlueConfigEntry, asyn
             NexBlueStatusSensor(coordinator, serial_number, "brightness"),
         )
     )
+    energy_coordinator = entry.runtime_data.energy_coordinator
+    async_add_entities(NexBlueEnergyTodaySensor(energy_coordinator, serial_number) for serial_number in coordinator.data)
 
 
 class NexBlueStatusSensor(CoordinatorEntity[NexBlueDataUpdateCoordinator], SensorEntity):
@@ -136,6 +138,32 @@ class NexBlueStatusSensor(CoordinatorEntity[NexBlueDataUpdateCoordinator], Senso
             return _bool_text(status.uk_reg, true_text="Enabled", false_text="Disabled")
         values = status.current_a if self._metric == "current" else status.voltage_v
         return values[self._phase] if self._phase is not None and len(values) > self._phase else None
+
+
+class NexBlueEnergyTodaySensor(CoordinatorEntity[NexBlueEnergyTodayCoordinator], SensorEntity):
+    """Energy delivered since local midnight, from NexBlue's aggregated measurements."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "energy_today"
+    _attr_name = "Energy today"
+    _attr_icon = "mdi:calendar-today"
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+    def __init__(self, coordinator: NexBlueEnergyTodayCoordinator, serial_number: str) -> None:
+        super().__init__(coordinator)
+        self._serial_number = serial_number
+        self._attr_unique_id = f"{serial_number}_energy_today"
+        self._attr_device_info = DeviceInfo(identifiers={("nexblue", serial_number)}, name=f"NexBlue {serial_number}", manufacturer="NexBlue")
+
+    @property
+    def available(self) -> bool:
+        return super().available and (self.coordinator.data or {}).get(self._serial_number) is not None
+
+    @property
+    def native_value(self) -> float | None:
+        return (self.coordinator.data or {}).get(self._serial_number)
 
 
 CHARGING_STATE_MAP = {
