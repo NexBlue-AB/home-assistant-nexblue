@@ -11,7 +11,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from nexblue_api import NexBlueClient
 
 from .const import CONF_API_BASE_URL, DEFAULT_API_URL, PLATFORMS
-from .coordinator import NexBlueDataUpdateCoordinator
+from .coordinator import NexBlueDataUpdateCoordinator, NexBlueLastSessionCoordinator
 
 
 NexBlueConfigEntry = ConfigEntry["NexBlueRuntimeData"]
@@ -23,6 +23,7 @@ class NexBlueRuntimeData:
 
     client: NexBlueClient
     coordinator: NexBlueDataUpdateCoordinator
+    session_coordinator: NexBlueLastSessionCoordinator
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: NexBlueConfigEntry) -> bool:
@@ -33,7 +34,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: NexBlueConfigEntry) -> b
     )
     coordinator = NexBlueDataUpdateCoordinator(hass, entry, client)
     await coordinator.async_config_entry_first_refresh()
-    entry.runtime_data = NexBlueRuntimeData(client=client, coordinator=coordinator)
+    session_coordinator = NexBlueLastSessionCoordinator(hass, entry, client, coordinator)
+    # Session history is optional; do not block setup if it is unavailable.
+    await session_coordinator.async_refresh()
+    entry.runtime_data = NexBlueRuntimeData(
+        client=client, coordinator=coordinator, session_coordinator=session_coordinator
+    )
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 

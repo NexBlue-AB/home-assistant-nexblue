@@ -10,3 +10,5 @@ PLATFORMS = ["sensor", "switch"]
 PRODUCTION_API_URL = "https://api.nexblue.com/third_party"
 DEFAULT_API_URL = PRODUCTION_API_URL
 UPDATE_INTERVAL = timedelta(minutes=1)
+SESSION_UPDATE_INTERVAL = timedelta(minutes=5)
+SESSION_LOOKBACK = timedelta(days=30)

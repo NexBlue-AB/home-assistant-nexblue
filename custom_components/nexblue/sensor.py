@@ -12,7 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import NexBlueConfigEntry
-from .coordinator import NexBlueDataUpdateCoordinator
+from .coordinator import NexBlueDataUpdateCoordinator, NexBlueLastSessionCoordinator
 
 DIAGNOSTIC_METRICS = {
     "is_lock",
@@ -53,6 +53,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: NexBlueConfigEntry, asyn
             # NexBlueStatusSensor(coordinator, serial_number, "uk_reg"),
             NexBlueStatusSensor(coordinator, serial_number, "brightness"),
         )
+    )
+    session_coordinator = entry.runtime_data.session_coordinator
+    async_add_entities(
+        NexBlueLastSessionSensor(session_coordinator, serial_number, metric)
+        for serial_number in coordinator.data
+        for metric in LAST_SESSION_METRICS
     )
 
 
@@ -137,6 +143,82 @@ class NexBlueStatusSensor(CoordinatorEntity[NexBlueDataUpdateCoordinator], Senso
         values = status.current_a if self._metric == "current" else status.voltage_v
         return values[self._phase] if self._phase is not None and len(values) > self._phase else None
 
+
+LAST_SESSION_METRICS = (
+    "last_session_start",
+    "last_session_end",
+    "last_session_energy",
+    "last_session_stop_reason",
+)
+
+
+class NexBlueLastSessionSensor(CoordinatorEntity[NexBlueLastSessionCoordinator], SensorEntity):
+    """Details of the most recent completed charging session."""
+
+    _attr_has_entity_name = True
+
+    def __init__(self, coordinator: NexBlueLastSessionCoordinator, serial_number: str, metric: str) -> None:
+        super().__init__(coordinator)
+        self._serial_number = serial_number
+        self._metric = metric
+        self._attr_unique_id = f"{serial_number}_{metric}"
+        self._attr_translation_key = metric
+        self._attr_device_info = DeviceInfo(identifiers={("nexblue", serial_number)}, name=f"NexBlue {serial_number}", manufacturer="NexBlue")
+        if metric == "last_session_start":
+            self._attr_name = "Last session start"
+            self._attr_icon = "mdi:clock-start"
+            self._attr_device_class = SensorDeviceClass.TIMESTAMP
+        elif metric == "last_session_end":
+            self._attr_name = "Last session end"
+            self._attr_icon = "mdi:clock-end"
+            self._attr_device_class = SensorDeviceClass.TIMESTAMP
+        elif metric == "last_session_energy":
+            self._attr_name = "Last session energy"
+            self._attr_icon = "mdi:lightning-bolt"
+            self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+            self._attr_device_class = SensorDeviceClass.ENERGY
+        else:
+            self._attr_name = "Last session stop reason"
+            self._attr_icon = "mdi:information-outline"
+
+    @property
+    def available(self) -> bool:
+        return super().available and (self.coordinator.data or {}).get(self._serial_number) is not None
+
+    @property
+    def native_value(self):
+        session = (self.coordinator.data or {}).get(self._serial_number)
+        if session is None:
+            return None
+        if self._metric == "last_session_start":
+            return session.start_time
+        if self._metric == "last_session_end":
+            return session.end_time
+        if self._metric == "last_session_energy":
+            return session.energy_kwh
+        if session.stop_reason is None:
+            return None
+        return STOP_REASON_MAP.get(session.stop_reason, session.stop_reason)
+
+
+STOP_REASON_MAP = {
+    "EmergencyStop": "Emergency stop",
+    "EVDisconnected": "Vehicle disconnected",
+    "HardReset": "Hard reset",
+    "Local": "Stopped at charger",
+    "Other": "Other",
+    "PowerLoss": "Power loss",
+    "Reboot": "Reboot",
+    "Remote": "Stopped remotely",
+    "SoftReset": "Soft reset",
+    "UnlockCommand": "Unlock command",
+    "DeAuthorized": "Deauthorised",
+    "Admin": "Stopped by admin",
+    "Schedule": "Schedule",
+    "None": "None",
+    "LB_Required": "Load balancing",
+    "Complete": "Complete",
+}
 
 CHARGING_STATE_MAP = {
     0: "Connect cable to charge",
