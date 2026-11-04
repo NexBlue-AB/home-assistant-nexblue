@@ -11,12 +11,14 @@ basic charging controls in Home Assistant.
   session and lifetime energy, current, voltage, network status, and selected
   diagnostic values
 - Start and stop charging
+- Charging current limit control (owner and installer accounts)
 - Automatic access-token renewal and recovery from an invalid refresh token
 - Home Assistant reauthentication when saved credentials can no longer sign in
 
 The integration polls the NexBlue cloud service approximately once per minute.
-It does not currently provide charger configuration controls such as changing a
-charging-current limit.
+The current limit control sets the charger's own limit. The charger still applies
+the lowest of that limit, the circuit fuse, the cable rating and any load
+balancing allowance.
 
 ### Installation
 

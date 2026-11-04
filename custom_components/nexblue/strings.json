@@ -26,6 +26,9 @@
     }
   },
   "entity": {
+    "number": {
+      "current_limit": {"name": "Current limit"}
+    },
     "sensor": {
       "charging_state": {"name": "Charging state"},
       "network_status": {"name": "Network status"},
